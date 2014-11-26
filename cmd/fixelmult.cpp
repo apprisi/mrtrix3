@@ -23,9 +23,9 @@
 #include "command.h"
 #include "progressbar.h"
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/loop.h"
 #include "image/voxel.h"
+#include "image/sparse/buffer.h"
 #include "image/sparse/fixel_metric.h"
 #include "image/sparse/voxel.h"
 
@@ -51,16 +51,16 @@ void usage ()
 void run ()
 {
   Image::Header input_header1 (argument[0]);
-  Image::BufferSparse<FixelMetric> input_data1 (input_header1);
+  Image::Sparse::Buffer<FixelMetric> input_data1 (input_header1);
   auto input_vox1 = input_data1.voxel();
 
   Image::Header input_header2 (argument[1]);
-  Image::BufferSparse<FixelMetric> input_data2 (input_header2);
+  Image::Sparse::Buffer<FixelMetric> input_data2 (input_header2);
   auto input_vox2 = input_data2.voxel();
 
   Image::check_dimensions(input_header1, input_header2);
 
-  Image::BufferSparse<FixelMetric> output_data (argument[2], input_header1);
+  Image::Sparse::Buffer<FixelMetric> output_data (argument[2], input_header1);
   auto output_vox = output_data.voxel();
 
   Image::LoopInOrder loop (input_data1, "multiplying fixel images...");

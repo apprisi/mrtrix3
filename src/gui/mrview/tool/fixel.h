@@ -24,7 +24,7 @@
 
 #include "gui/mrview/displayable.h"
 #include "image/header.h"
-#include "image/buffer_sparse.h"
+#include "image/sparse/buffer.h"
 #include "image/sparse/fixel_metric.h"
 #include "image/sparse/voxel.h"
 #include "image/transform.h"
@@ -109,8 +109,8 @@ namespace MR
               std::string filename;
               Vector& fixel_tool;
               MR::Image::Header header;
-              MR::Image::BufferSparse<MR::Image::Sparse::FixelMetric> fixel_data;
-              MR::Image::BufferSparse<MR::Image::Sparse::FixelMetric>::voxel_type fixel_vox;
+              MR::Image::Sparse::Buffer<MR::Image::Sparse::FixelMetric> fixel_data;
+              MR::Image::Sparse::Buffer<MR::Image::Sparse::FixelMetric>::voxel_type fixel_vox;
               MR::Image::Transform header_transform;
               ColourMap::Renderer colourbar_renderer;
               int colourbar_position_index;

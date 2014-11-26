@@ -24,11 +24,11 @@
 #include "progressbar.h"
 
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/nav.h"
 #include "image/utils.h"
 #include "image/voxel.h"
 
+#include "image/sparse/buffer.h"
 #include "image/sparse/fixel_metric.h"
 #include "image/sparse/keys.h"
 #include "image/sparse/voxel.h"
@@ -136,12 +136,12 @@ class Segmented_FOD_receiver
   private:
     Image::Header H;
 
-    Ptr< Image::BufferSparse<FixelMetric> > afd_data;
-    Ptr< Image::BufferSparse<FixelMetric>::voxel_type > afd;
-    Ptr< Image::BufferSparse<FixelMetric> > peak_data;
-    Ptr< Image::BufferSparse<FixelMetric>::voxel_type > peak;
-    Ptr< Image::BufferSparse<FixelMetric> > disp_data;
-    Ptr< Image::BufferSparse<FixelMetric>::voxel_type > disp;
+    Ptr< Image::Sparse::Buffer<FixelMetric> > afd_data;
+    Ptr< Image::Sparse::Buffer<FixelMetric>::voxel_type > afd;
+    Ptr< Image::Sparse::Buffer<FixelMetric> > peak_data;
+    Ptr< Image::Sparse::Buffer<FixelMetric>::voxel_type > peak;
+    Ptr< Image::Sparse::Buffer<FixelMetric> > disp_data;
+    Ptr< Image::Sparse::Buffer<FixelMetric>::voxel_type > disp;
 
 
 };
@@ -152,22 +152,22 @@ class Segmented_FOD_receiver
 void Segmented_FOD_receiver::set_afd_output (const std::string& path)
 {
   assert (!afd_data);
-  afd_data = new Image::BufferSparse<FixelMetric> (path, H);
-  afd = new Image::BufferSparse<FixelMetric>::voxel_type (*afd_data);
+  afd_data = new Image::Sparse::Buffer<FixelMetric> (path, H);
+  afd = new Image::Sparse::Buffer<FixelMetric>::voxel_type (*afd_data);
 }
 
 void Segmented_FOD_receiver::set_peak_output (const std::string& path)
 {
   assert (!peak_data);
-  peak_data = new Image::BufferSparse<FixelMetric> (path, H);
-  peak = new Image::BufferSparse<FixelMetric>::voxel_type (*peak_data);
+  peak_data = new Image::Sparse::Buffer<FixelMetric> (path, H);
+  peak = new Image::Sparse::Buffer<FixelMetric>::voxel_type (*peak_data);
 }
 
 void Segmented_FOD_receiver::set_disp_output (const std::string& path)
 {
   assert (!disp_data);
-  disp_data = new Image::BufferSparse<FixelMetric> (path, H);
-  disp = new Image::BufferSparse<FixelMetric>::voxel_type (*disp_data);
+  disp_data = new Image::Sparse::Buffer<FixelMetric> (path, H);
+  disp = new Image::Sparse::Buffer<FixelMetric>::voxel_type (*disp_data);
 }
 
 size_t Segmented_FOD_receiver::num_outputs() const

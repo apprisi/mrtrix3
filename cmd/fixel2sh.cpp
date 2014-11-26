@@ -24,10 +24,10 @@
 #include "progressbar.h"
 
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/loop.h"
 #include "image/voxel.h"
 
+#include "image/sparse/buffer.h"
 #include "image/sparse/fixel_metric.h"
 #include "image/sparse/voxel.h"
 
@@ -64,7 +64,7 @@ void run ()
 {
 
   Image::Header H_in (argument[0]);
-  Image::BufferSparse<FixelMetric> fixel_data (H_in);
+  Image::Sparse::Buffer<FixelMetric> fixel_data (H_in);
   auto fixel = fixel_data.voxel();
 
   const size_t lmax = 8;

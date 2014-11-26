@@ -18,7 +18,6 @@
 #include "math/rng.h"
 
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/loop.h"
 
 #include "file/ofstream.h"

@@ -25,10 +25,10 @@
 #include "progressbar.h"
 
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/loop.h"
 #include "image/voxel.h"
 
+#include "image/sparse/buffer.h"
 #include "image/sparse/fixel_metric.h"
 #include "image/sparse/keys.h"
 #include "image/sparse/voxel.h"
@@ -97,7 +97,7 @@ void usage ()
 class OpBase
 {
   protected:
-    typedef Image::BufferSparse<FixelMetric>::voxel_type in_vox_type;
+    typedef Image::Sparse::Buffer<FixelMetric>::voxel_type in_vox_type;
     typedef Image::Buffer<float>::voxel_type out_vox_type;
 
   public:
@@ -596,7 +596,7 @@ class Split : public OpBase
 void run ()
 {
   Image::Header H_in (argument[0]);
-  Image::BufferSparse<FixelMetric> fixel_data (H_in);
+  Image::Sparse::Buffer<FixelMetric> fixel_data (H_in);
   auto voxel = fixel_data.voxel();
 
   const int op = argument[1];
@@ -614,7 +614,7 @@ void run ()
   } else if (op == 15) { // split
     H_out.set_ndim (4);
     uint32_t max_count = 0;
-    Image::BufferSparse<FixelMetric>::voxel_type voxel (fixel_data);
+    Image::Sparse::Buffer<FixelMetric>::voxel_type voxel (fixel_data);
     Image::LoopInOrder loop (voxel, "determining largest fixel count... ");
     for (loop.start (voxel); loop.ok(); loop.next (voxel))
       max_count = std::max (max_count, voxel.value().size());

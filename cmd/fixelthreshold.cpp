@@ -23,9 +23,8 @@
 #include "command.h"
 #include "progressbar.h"
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/loop.h"
-#include "image/voxel.h"
+#include "image/sparse/buffer.h"
 #include "image/sparse/fixel_metric.h"
 #include "image/sparse/voxel.h"
 
@@ -57,12 +56,12 @@ void usage ()
 void run ()
 {
   Image::Header input_header (argument[0]);
-  Image::BufferSparse<FixelMetric> input_data (input_header);
+  Image::Sparse::Buffer<FixelMetric> input_data (input_header);
   auto input_vox = input_data.voxel();
 
   float threshold = argument[1];
 
-  Image::BufferSparse<FixelMetric> output (argument[2], input_header);
+  Image::Sparse::Buffer<FixelMetric> output (argument[2], input_header);
   auto output_vox = output.voxel();
 
   Options opt = get_options("crop");
@@ -70,17 +69,17 @@ void run ()
   Image::LoopInOrder loop (input_vox, "thresholding fixel image...");
   for (auto i = loop (input_vox, output_vox); i; ++i) {
     if (opt.size()) {
-        size_t fixel_count = 0;
-        for (size_t f = 0; f != input_vox.value().size(); ++f) {
-          if (input_vox.value()[f].value > threshold)
-            fixel_count++;
-        }
-        output_vox.value().set_size (fixel_count);
-        fixel_count = 0;
-        for (size_t f = 0; f != input_vox.value().size(); ++f) {
-          if (input_vox.value()[f].value > threshold)
-            output_vox.value()[fixel_count++] = input_vox.value()[f];
-        }
+      size_t fixel_count = 0;
+      for (size_t f = 0; f != input_vox.value().size(); ++f) {
+        if (input_vox.value()[f].value > threshold)
+          fixel_count++;
+      }
+      output_vox.value().set_size (fixel_count);
+      fixel_count = 0;
+      for (size_t f = 0; f != input_vox.value().size(); ++f) {
+        if (input_vox.value()[f].value > threshold)
+          output_vox.value()[fixel_count++] = input_vox.value()[f];
+      }
     } else {
       output_vox.value().set_size (input_vox.value().size());
       for (size_t f = 0; f != input_vox.value().size(); ++f) {

@@ -27,9 +27,9 @@
 
 #include "ptr.h"
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/voxel.h"
 #include "image/handler/base.h"
+#include "image/sparse/buffer.h"
 #include "image/sparse/value.h"
 
 namespace MR
@@ -44,7 +44,7 @@ namespace MR
     template <class SparseDataType>
       class Voxel : public Image::Voxel< Image::Buffer<uint64_t> > {
         public:
-          Voxel (BufferSparse<SparseDataType>& array) :
+          Voxel (Sparse::Buffer<SparseDataType>& array) :
               Image::Voxel< Image::Buffer<uint64_t> > (array),
               handler_ (array.__get_handler ()) { }
 

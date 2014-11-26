@@ -20,13 +20,12 @@
 
 */
 
-#ifndef __image_sparse_buffer_sparse_h__
-#define __image_sparse_buffer_sparse_h__
+#ifndef __image_sparse_buffer_h__
+#define __image_sparse_buffer_h__
 
 #include <typeinfo>
 
 #include "image/buffer.h"
-#include "image/loop.h"
 #include "image/handler/sparse.h"
 #include "image/sparse/keys.h"
 
@@ -35,13 +34,11 @@ namespace MR
 {
   namespace Image
   {
-
-
     namespace Sparse
     {
-      template <class SparseDataType> class Voxel;
-    }
 
+
+      template <class SparseDataType> class Voxel;
 
 
     // A convenience class for wrapping access to sparse images
@@ -50,37 +47,37 @@ namespace MR
     // Also: Any attempt to unify this concept of image data storage will likely also involve
     //   generalisation of the other Buffer offshoot classes (BufferPreload, BufferScratch)
     template <typename SparseDataType>
-      class BufferSparse : public Buffer<uint64_t>
+      class Buffer : public Image::Buffer<uint64_t>
     {
       public:
-        BufferSparse (const std::string& image_name, bool readwrite = false) :
-            Buffer<uint64_t> (image_name, readwrite) { check(); }
+        Buffer (const std::string& image_name, bool readwrite = false) :
+            Image::Buffer<uint64_t> (image_name, readwrite) { check(); }
 
-        BufferSparse (const Header& header, bool readwrite = false) :
-            Buffer<uint64_t> (header, readwrite) { check(); }
+        Buffer (const Header& header, bool readwrite = false) :
+            Image::Buffer<uint64_t> (header, readwrite) { check(); }
 
-        BufferSparse (const BufferSparse<SparseDataType>& that) :
-            Buffer<uint64_t> (that) { }
+        Buffer (const Buffer<SparseDataType>& that) :
+            Image::Buffer<uint64_t> (that) { }
 
-        BufferSparse (const std::string& image_name, const Header& template_header) :
-            Buffer<uint64_t> (image_name, template_header) { check(); }
+        Buffer (const std::string& image_name, const Header& template_header) :
+            Image::Buffer<uint64_t> (image_name, template_header) { check(); }
 
 
         typedef uint64_t value_type;
         typedef SparseDataType sparse_data_type;
-        typedef Image::Sparse::Voxel<sparse_data_type> voxel_type;
+        typedef Sparse::Voxel<sparse_data_type> voxel_type;
 
         voxel_type voxel() { return voxel_type (*this); }
 
 
       protected:
         template <class InfoType> 
-          BufferSparse& operator= (const InfoType&) { assert (0); return *this; }
+          Buffer& operator= (const InfoType&) { assert (0); return *this; }
 
 
         // Don't permit constructing from another BufferSparse using a different type
         template <typename OtherSparseType>
-          BufferSparse (const BufferSparse<OtherSparseType>& buffer) : Buffer<uint64_t> (buffer) { assert (0); }
+          Buffer (const Buffer<OtherSparseType>& buffer) : Buffer<uint64_t> (buffer) { assert (0); }
 
 
         void check()
@@ -109,7 +106,7 @@ namespace MR
     };
 
 
-
+    }
   }
 }
 

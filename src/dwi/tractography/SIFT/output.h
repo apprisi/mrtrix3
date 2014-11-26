@@ -33,10 +33,10 @@
 #include "file/ofstream.h"
 
 #include "image/buffer.h"
-#include "image/buffer_sparse.h"
 #include "image/header.h"
 #include "image/loop.h"
 
+#include "image/sparse/buffer.h"
 #include "image/sparse/fixel_metric.h"
 #include "image/sparse/keys.h"
 #include "image/sparse/voxel.h"
@@ -117,7 +117,7 @@ namespace MR
         H_fixel.datatype().set_byte_order_native();
         H_fixel[Image::Sparse::name_key] = str(typeid(FixelMetric).name());
         H_fixel[Image::Sparse::size_key] = str(sizeof(FixelMetric));
-        Image::BufferSparse<FixelMetric> out (path, H_fixel);
+        Image::Sparse::Buffer<FixelMetric> out (path, H_fixel);
         auto v_out = out.voxel();
         VoxelAccessor v (accessor);
         for (auto l = Image::LoopInOrder(v_out) (v_out, v); l; ++l) {
@@ -218,7 +218,7 @@ namespace MR
         H_fixel.datatype().set_byte_order_native();
         H_fixel[Image::Sparse::name_key] = str(typeid(FixelMetric).name());
         H_fixel[Image::Sparse::size_key] = str(sizeof(FixelMetric));
-        Image::BufferSparse<FixelMetric> out (path, H_fixel);
+        Image::Sparse::Buffer<FixelMetric> out (path, H_fixel);
         auto v_out = out.voxel();
         VoxelAccessor v (accessor);
         for (auto l = Image::LoopInOrder(v_out) (v_out, v); l; ++l) {
@@ -275,9 +275,9 @@ namespace MR
         H_fixel.datatype().set_byte_order_native();
         H_fixel[Image::Sparse::name_key] = str(typeid(FixelMetric).name());
         H_fixel[Image::Sparse::size_key] = str(sizeof(FixelMetric));
-        Image::BufferSparse<FixelMetric> out_diff (diff_path, H_fixel);
+        Image::Sparse::Buffer<FixelMetric> out_diff (diff_path, H_fixel);
         auto v_diff = out_diff.voxel();
-        Image::BufferSparse<FixelMetric> out_cost (cost_path, H_fixel);
+        Image::Sparse::Buffer<FixelMetric> out_cost (cost_path, H_fixel);
         auto v_cost = out_cost.voxel();
         VoxelAccessor v (accessor);
         Image::LoopInOrder loop (v_diff);

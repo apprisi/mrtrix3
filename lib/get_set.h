@@ -355,7 +355,6 @@ namespace MR
       if (value) new_value = prev | (BITMASK >> i%8);
       else new_value = prev & ~(BITMASK >> i%8);
     } while (!at->compare_exchange_weak (prev, new_value));
-
   }
 
   //! \endcond

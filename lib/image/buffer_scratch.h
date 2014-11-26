@@ -23,12 +23,10 @@
 #ifndef __image_buffer_scratch_h__
 #define __image_buffer_scratch_h__
 
-#include "bitset.h"
 #include "debug.h"
 #include "image/info.h"
-#include "image/stride.h"
+#include "image/utils.h"
 #include "image/voxel.h"
-#include "image/adapter/info.h"
 
 namespace MR
 {
@@ -137,6 +135,10 @@ namespace MR
 
         void set_value (size_t index, bool val) {
           put<bool> (val, data_, index);
+        }
+
+        uint8_t* address (size_t index) const {
+          return ((uint8_t*)data_ + (index>>3));
         }
 
         friend std::ostream& operator<< (std::ostream& stream, const BufferScratch& V) {
