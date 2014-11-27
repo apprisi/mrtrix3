@@ -26,7 +26,6 @@
 #include <iostream>
 
 
-
 namespace MR
 {
   namespace Image
@@ -35,31 +34,34 @@ namespace MR
     {
 
 
+    template <typename ValueType> class Voxel;
+
+
     template <typename ValueType> class Value
     {
       public:
         typedef ValueType value_type;
 
-        Value (Atomic::Voxel<value_type>& parent) : S (parent) { }
+        Value (Atomic::Voxel<ValueType>& parent) : S (parent) { }
         operator value_type () const {
           return S.get_value();
         }
         void operator= (value_type value) {
-          S.update_value ([](value_type old){ return value; });
+          S.update_value ([&](value_type old){ return value; });
         }
         // A copy-constructor would no longer be atomic...
-        value_type operator= (const ValueAtomic& V) = delete;
+        value_type operator= (const Atomic::Value<ValueType>& V) = delete;
         void operator+= (value_type value) {
-          S.update_value ([](value_type old){ return (old + value); });
+          S.update_value ([&](value_type old){ return (old + value); });
         }
         void operator-= (value_type value) {
-          S.update_value ([](value_type old){ return (old - value); });
+          S.update_value ([&](value_type old){ return (old - value); });
         }
         void operator*= (value_type value) {
-          S.update_value ([](value_type old){ return (old * value); });
+          S.update_value ([&](value_type old){ return (old * value); });
         }
         void operator/= (value_type value) {
-          S.update_value ([](value_type old){ return (old / value); });
+          S.update_value ([&](value_type old){ return (old / value); });
         }
 
         //! return RAM address of current voxel
@@ -67,12 +69,16 @@ namespace MR
           return S.address();
         }
 
-        friend std::ostream& operator<< (std::ostream& stream, const Atomic::Value& V) {
+        friend std::ostream& operator<< (std::ostream& stream, const Atomic::Value<ValueType>& V) {
           stream << V.get_value();
           return stream;
         }
       private:
-        Atomic::Voxel<value_type>& S;
+        Atomic::Voxel<ValueType>& S;
+
+        value_type get_value () const {
+          return S.get_value();
+        }
     };
 
     }

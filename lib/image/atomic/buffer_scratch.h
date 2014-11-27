@@ -26,6 +26,7 @@
 #include "get_set.h"
 #include "image/buffer_scratch.h"
 #include "image/info.h"
+#include "image/atomic/voxel.h"
 
 
 namespace MR
@@ -37,38 +38,41 @@ namespace MR
 
 
     template <typename ValueType>
-      class BufferScratch : protected Image::BufferScratch
+    class BufferScratch : public Image::BufferScratch<ValueType>
     {
       public:
         template <class Template>
         BufferScratch (const Template& info, const std::memory_order order = std::memory_order_seq_cst) :
-            Image::BufferScratch (info),
-            mem_order (order)) { }
+            Image::BufferScratch<ValueType> (info),
+            mem_order (order) { }
 
         template <class Template>
         BufferScratch (const Template& info, const std::string& label, const std::memory_order order = std::memory_order_seq_cst) :
-            Image::BufferScratch (info, label),
-            mem_order (order)) { }
+            Image::BufferScratch<ValueType> (info, label),
+            mem_order (order) { }
 
         typedef ValueType value_type;
-        typedef Atomic::Voxel voxel_type;
+        typedef Atomic::Voxel<ValueType> voxel_type;
 
         voxel_type voxel() { return voxel_type (*this); }
 
         value_type get_value (size_t index) const
         {
-          return std::atomic_load_explicit (reinterpret_cast< std::atomic<value_type> >(data_[index]), mem_order);
+          return value_type(*std::atomic_load_explicit (reinterpret_cast< std::atomic<value_type>* >(Image::BufferScratch<ValueType>::data_ + (index * sizeof(ValueType))), mem_order));
         }
 
         template <class Functor>
         void update_value (const Functor& functor, size_t index)
         {
-          value_type value = std::atomic_load_explicit (reinterpret_cast< std::atomic<value_type> >(data_[index]), std::memory_order_relaxed);
-          while (std::atomic_compare_exchange_weak_explicit (&reinterpret_cast< std::atomic<value_type> >(data_[index]), &value, functor (value), mem_order, std::memory_order_relaxed));
+          std::atomic<value_type>* pseudo_atomic = reinterpret_cast< std::atomic<value_type>* >(Image::BufferScratch<ValueType>::data_ + (index * sizeof(ValueType)));
+          value_type value = pseudo_atomic->load (std::memory_order_relaxed);
+          while (pseudo_atomic->compare_exchange_weak (value, functor (value), mem_order, std::memory_order_relaxed));
         }
 
-        friend std::ostream& operator<< (std::ostream& stream, const Atomic::BufferScratch& V) {
-          stream << "atomic " << *(dynamic_cast<Image::BufferScratch*>(this));
+        void set_value (size_t, value_type) = delete;
+
+        friend std::ostream& operator<< (std::ostream& stream, const Atomic::BufferScratch<ValueType>& V) {
+          stream << "atomic " << *(dynamic_cast< Image::BufferScratch<ValueType>* >(&V));
           return stream;
         }
 
@@ -78,7 +82,7 @@ namespace MR
         template <class InfoType>
           BufferScratch& operator= (const InfoType&) { assert (0); return *this; }
 
-        BufferScratch (const BufferScratch& that) : Image::BufferScratch (that), mem_order (std::memory_order_seq_cst) { assert (0); }
+        BufferScratch (const BufferScratch& that) : Image::BufferScratch<ValueType> (that), mem_order (std::memory_order_seq_cst) { assert (0); }
     };
 
 
@@ -86,59 +90,60 @@ namespace MR
 
 
     template <>
-    class BufferScratch<bool> : protected Image::BufferScratch<bool>
+    class BufferScratch<bool> : public Image::BufferScratch<bool>
     {
       public:
         template <class Template>
         BufferScratch (const Template& info, const std::memory_order order = std::memory_order_seq_cst) :
             Image::BufferScratch<bool> (info),
-            mem_order (order)) { }
+            mem_order (order) { }
 
         template <class Template>
         BufferScratch (const Template& info, const std::string& label, const std::memory_order order = std::memory_order_seq_cst) :
             Image::BufferScratch<bool> (info, label),
-            mem_order (order)) { }
+            mem_order (order) { }
+
+        template <class InfoType>
+        BufferScratch& operator= (const InfoType&) = delete;
+
+        BufferScratch (const BufferScratch& that) = delete;
 
         typedef Atomic::Voxel<bool> voxel_type;
 
         voxel_type voxel() { return voxel_type (*this); }
 
-        // TODO Necessary to make this thread-safe?
-        void zero () {
-          memset (data_, 0x00, bytes_);
-        }
-
         bool get_value (size_t index) const
         {
-          const uint8_t byte = std::atomic_load_explicit (reinterpret_cast< std::atomic<value_type> >(data_[index>>3]), mem_order);
+          const uint8_t byte = std::atomic_load_explicit (reinterpret_cast< std::atomic<uint8_t>* >(Image::BufferScratch<bool>::data_ + (index>>3)), mem_order);
           return (byte & (BITMASK >> (index&7)));
         }
 
         template <class Functor>
         void update_value (const Functor& functor, size_t index)
         {
-          std::atomic<uint8_t>* byte = reinterpret_cast<std::atomic<uint8_t>*> (data_ + (index>>3));
+          std::atomic<uint8_t>* byte = reinterpret_cast<std::atomic<uint8_t>*> (Image::BufferScratch<bool>::data_ + (index>>3));
           uint8_t prev_value = *byte, new_value;
           do {
             if (functor (prev_value))
-              new_value = prev_value |  (BITMASK >> i&7);
+              new_value = prev_value |  (BITMASK >> index&7);
             else
-              new_value = prev_value & ~(BITMASK >> i&7);
-          } while (!byte->compare_exchange_weak (&prev_value, new_value, mem_order));
+              new_value = prev_value & ~(BITMASK >> index&7);
+          } while (!byte->compare_exchange_weak (prev_value, new_value, mem_order));
         }
 
+        void set_value (size_t, bool) = delete;
+
         friend std::ostream& operator<< (std::ostream& stream, const BufferScratch& V) {
-          stream << "atomic " << *(dynamic_cast<Image::BufferScratch<bool>*>(this));
+          stream << "atomic " << *(dynamic_cast< const Image::BufferScratch<bool>* >(&V));
           return stream;
         }
 
       protected:
         const std::memory_order mem_order;
 
-        template <class InfoType>
-          BufferScratch& operator= (const InfoType&) { assert (0); return *this; }
 
-        BufferScratch (const BufferScratch& that) : Image::BufferScratch<bool> (that), mem_order (std::memory_order_seq_cst) { assert (0); }
+
+
 
     };
 

@@ -24,6 +24,8 @@
 #define __image_atomic_voxel_h__
 
 #include "image/atomic/value.h"
+#include "image/buffer.h"
+#include "image/copy.h"
 #include "image/voxel.h"
 
 namespace MR
@@ -34,31 +36,34 @@ namespace MR
     {
 
 
+    template <typename ValueType> class BufferScratch;
+
+
     template <class ValueType>
-      class Voxel : public Image::Voxel {
+      class Voxel : public Image::Voxel< Atomic::BufferScratch<ValueType> > {
         public:
-          VoxelAtomic (BufferAtomic<value_type>& array) :
-              Image::Voxel (array) { }
+          Voxel (Atomic::BufferScratch<ValueType>& array) :
+              Image::Voxel< Atomic::BufferScratch<ValueType> > (array) { }
 
           typedef ValueType value_type;
           typedef Voxel voxel_type;
 
-          Atomic::Value<Voxel> value () {
-            return Atomic::Value<Voxel> (*this);
+          Atomic::Value<ValueType> value () {
+            return Atomic::Value<ValueType> (*this);
           }
 
 
 
-          friend std::ostream& operator<< (std::ostream& stream, const Atomic::Voxel& V) {
-            stream << "atomic " << *(dynamic_cast(Image::Voxel*)(this));
+          friend std::ostream& operator<< (std::ostream& stream, const Atomic::Voxel<ValueType>& V) {
+            stream << "atomic " << *(dynamic_cast< Image::Voxel< Atomic::BufferScratch<ValueType> >*>(&V));
             return stream;
           }
 
           std::string save (const std::string& filename) const 
           {
-            Atomic::Voxel in (*this);
+            Atomic::Voxel<value_type> in (*this);
             Image::Header header;
-            header.info() = info();
+            header.info() = Image::Voxel< Atomic::BufferScratch<ValueType> >::info();
             Image::Buffer<value_type> buffer_out (filename, header);
             typename Image::Buffer<value_type>::voxel_type out (buffer_out);
             Image::threaded_copy (in, out);
@@ -67,6 +72,9 @@ namespace MR
 
 
         protected:
+
+          using Image::Voxel< Atomic::BufferScratch<ValueType> >::data_;
+          using Image::Voxel< Atomic::BufferScratch<ValueType> >::offset_;
 
           value_type get_value () const {
             return data_.get_value (offset_);
