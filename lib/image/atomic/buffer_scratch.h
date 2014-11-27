@@ -58,13 +58,13 @@ namespace MR
 
         value_type get_value (size_t index) const
         {
-          return value_type(*std::atomic_load_explicit (reinterpret_cast< std::atomic<value_type>* >(Image::BufferScratch<ValueType>::data_ + (index * sizeof(ValueType))), mem_order));
+          return value_type(std::atomic_load_explicit (reinterpret_cast< std::atomic<value_type>* >(Image::BufferScratch<ValueType>::data_ + index), mem_order));
         }
 
         template <class Functor>
         void update_value (const Functor& functor, size_t index)
         {
-          std::atomic<value_type>* pseudo_atomic = reinterpret_cast< std::atomic<value_type>* >(Image::BufferScratch<ValueType>::data_ + (index * sizeof(ValueType)));
+          std::atomic<value_type>* pseudo_atomic = reinterpret_cast< std::atomic<value_type>* >(Image::BufferScratch<ValueType>::data_ + index);
           value_type value = pseudo_atomic->load (std::memory_order_relaxed);
           while (pseudo_atomic->compare_exchange_weak (value, functor (value), mem_order, std::memory_order_relaxed));
         }
