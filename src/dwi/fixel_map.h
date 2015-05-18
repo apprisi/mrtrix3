@@ -26,11 +26,8 @@
 #define __dwi_fixel_map_h__
 
 
-#include "image/buffer_scratch.h"
-#include "image/loop.h"
-#include "image/nav.h"
-#include "image/voxel.h"
-
+#include "image.h"
+#include "algo/loop.h"
 #include "dwi/fmls.h"
 #include "dwi/directions/mask.h"
 
@@ -47,30 +44,26 @@ namespace MR
     {
 
       public:
-        template <typename Set>
-        Fixel_map (const Set& i) :
-        info_ (i),
-        data  (info_, "fixel map voxels"),
-        accessor (data)
-        {
-          Image::Voxel< Image::BufferScratch<MapVoxel*> > v (data);
-          for (auto l = Image::Loop() (v); l; ++l) 
-            v.value() = NULL;
-          // fixels[0] is an invaid fixel, as provided by the relevant empty constructor
-          // This allows index 0 to be used as an error code, simplifying the implementation of MapVoxel and Iterator
-          fixels.push_back (Fixel());
-        }
+        template <typename HeaderType>
+          Fixel_map (const HeaderType& i) :
+            accessor (Image<MapVoxel*>::scratch (i, "fixel map voxels")) {
+              for (auto l = Loop() (accessor); l; ++l) 
+                accessor.value() = nullptr;
+              // fixels[0] is an invaid fixel, as provided by the relevant empty constructor
+              // This allows index 0 to be used as an error code, simplifying the implementation of MapVoxel and Iterator
+              fixels.push_back (Fixel());
+            }
+        Fixel_map (const Fixel_map&) = delete;
 
         class MapVoxel;
-        typedef Image::Voxel< Image::BufferScratch<MapVoxel*> > VoxelAccessor;
+        typedef Image<MapVoxel*> VoxelAccessor;
 
         virtual ~Fixel_map()
         {
-          VoxelAccessor v (accessor);
-          for (auto l = Image::Loop() (v); l; ++l) {
-            if (v.value()) {
-              delete v.value();
-              v.value() = NULL;
+          for (auto l = Loop() (accessor); l; ++l) {
+            if (accessor.value()) {
+              delete accessor.value();
+              accessor.value() = nullptr;
             }
           }
         }
@@ -87,28 +80,13 @@ namespace MR
 
         virtual bool operator() (const FMLS::FOD_lobes& in);
 
-        const Image::Info& info() const { return info_; }
-
 
       protected:
 
-        const class Info : public Image::Info {
-          public:
-          template <typename T>
-          Info (const T& i) :
-          Image::Info (i.info())
-          {
-            set_ndim (3);
-          }
-          Info () : Image::Info () { }
-        } info_;
-
-        Image::BufferScratch<MapVoxel*> data;
         const VoxelAccessor accessor; // Functions can copy-construct their own voxel accessor from this and retain const-ness
         std::vector<Fixel> fixels;
 
 
-        Fixel_map (const Fixel_map& that) : info_ (that.data), data (info_) { assert (0); }
 
 
     };
@@ -131,13 +109,13 @@ namespace MR
         MapVoxel (const size_t first, const size_t size) :
           first_fixel_index (first),
           count (size),
-          lookup_table (NULL) { }
+          lookup_table (nullptr) { }
 
         ~MapVoxel()
         {
           if (lookup_table) {
             delete[] lookup_table;
-            lookup_table = NULL;
+            lookup_table = nullptr;
           }
         }
 
@@ -209,15 +187,17 @@ namespace MR
     {
         if (in.empty())
           return true;
-        if (!Image::Nav::within_bounds (data, in.vox))
+        auto v = accessor;
+        v.index(0) = in.vox[0];
+        v.index(1) = in.vox[1];
+        v.index(2) = in.vox[2];
+        if (is_out_of_bounds (v))
           return false;
-        VoxelAccessor v (accessor);
-        Image::Nav::set_pos (v, in.vox);
         if (v.value())
           throw Exception ("FIXME: FOD_map has received multiple segmentations for the same voxel!");
         v.value() = new MapVoxel (in, fixels.size());
-        for (FMLS::FOD_lobes::const_iterator i = in.begin(); i != in.end(); ++i)
-          fixels.push_back (Fixel (*i));
+        for (const auto& i : in)
+          fixels.push_back (Fixel (i));
         return true;
     }
 

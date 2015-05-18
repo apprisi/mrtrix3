@@ -27,12 +27,8 @@
 
 #include <vector>
 
-#include "point.h"
-
-#include "image/buffer_preload.h"
-#include "image/info.h"
-#include "image/transform.h"
-#include "math/matrix.h"
+#include "image.h"
+#include "transform.h"
 #include "thread_queue.h"
 
 #include "dwi/directions/set.h"

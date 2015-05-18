@@ -168,8 +168,8 @@ namespace MR
 
 
 #ifdef DYNAMIC_SEED_DEBUGGING
-        Tractography::Writer<float> seed_output;
-        void write_seed (const Point<float>&);
+        Writer<> seed_output;
+        void write_seed (const Eigen::Vector3f&);
 #endif
 
         Image::Transform transform;
@@ -185,9 +185,9 @@ namespace MR
       class WriteKernelDynamic : public Tracking::WriteKernel
       {
         public:
-          WriteKernelDynamic (const Tracking::SharedBase& shared, const std::string& output_file, const DWI::Tractography::Properties& properties) :
+          WriteKernelDynamic (const Tracking::SharedBase& shared, const std::string& output_file, const Properties& properties) :
               Tracking::WriteKernel (shared, output_file, properties) { }
-          bool operator() (const Tracking::GeneratedTrack&, Tractography::Streamline<>&);
+          bool operator() (const Tracking::GeneratedTrack&, Streamline<>&);
       };
 
 

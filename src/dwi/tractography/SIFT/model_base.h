@@ -26,8 +26,6 @@
 #define __dwi_tractography_sift_model_base_h__
 
 #include "app.h"
-#include "point.h"
-
 #include "dwi/fixel_map.h"
 #include "dwi/fmls.h"
 
@@ -46,12 +44,8 @@
 #include "dwi/tractography/SIFT/proc_mask.h"
 #include "dwi/tractography/SIFT/types.h"
 
-#include "image/buffer.h"
-#include "image/buffer_scratch.h"
-#include "image/copy.h"
-#include "image/header.h"
-#include "image/loop.h"
-
+#include "image.h"
+#include "algo/copy.h"
 #include "thread_queue.h"
 
 
